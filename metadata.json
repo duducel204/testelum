@@ -1,0 +1,6 @@
+{
+  "name": "Lúmina Jurerê - Radar de Captação LED",
+  "description": "Inteligência de prospecção e conexão com tomadores de decisão para projetos de iluminação externa e fachadas LED em Jurerê e cidades selecionadas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
