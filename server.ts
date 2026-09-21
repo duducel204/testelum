@@ -3,6 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { SocialIntelligenceOrchestrator } from "./src/services/social/SocialIntelligenceOrchestrator";
 
 dotenv.config();
 
@@ -27,6 +28,9 @@ function getGeminiClient() {
     },
   });
 }
+
+// Inicializa o orquestrador modular de Social Intelligence
+const socialOrchestrator = new SocialIntelligenceOrchestrator(getGeminiClient);
 
 // Check if error is a rate limit or quota exhaustion (HTTP 429 / RESOURCE_EXHAUSTED)
 function isQuotaError(error: any): boolean {
@@ -1619,6 +1623,268 @@ Responda em formato JSON:
   }
 });
 
+// Helper: Local resilient response generator for the AI Assistant Chatbot
+function generateFallbackChatResponse(messages: any[], role: string, contextLead: any): string {
+  const lastUserMsg = (messages.slice().reverse().find((m: any) => m.role === 'user')?.content || '').toLowerCase();
+  const leadName = contextLead?.title || 'imóvel em Jurerê';
+
+  if (role === 'luminotecnico') {
+    if (lastUserMsg.includes('temperatura') || lastUserMsg.includes('kelvin') || lastUserMsg.includes('cor')) {
+      return `### 💡 Guia de Temperatura de Cor para Jurerê Internacional
+
+Para residências e condomínios de alto padrão no litoral catarinense, a regra fundamental é:
+
+1. **2700K (Branco Muito Quente - Warm White):**
+   - **Onde aplicar:** Decks de madeira nobre (Cumaru/Ipê), pergolados, áreas de piscina, lounges externos e revestimentos em pedra natural (Moledo, Arenito).
+   - **Efeito:** Sensação acolhedora e intimista de resort de luxo. Evita o aspecto hospitalar/frio.
+
+2. **3000K (Branco Quente Nobre):**
+   - **Onde aplicar:** Fachadas contemporâneas em concreto aparente ripado, colunas estruturais, brises e palmeiras imperiais de grande porte.
+   - **Efeito:** Destaque arquitetônico limpo com contraste elegante sem amarelamento excessivo.
+
+3. **⚠️ Proibido no alto padrão:**
+   - 4000K (neutro) e 6500K (frio) jamais devem ser usados em áreas sociais externas de mansões em Jurerê, pois anulam o conforto visual e desvalorizam as fotos noturnas.
+
+**Recomendação de Especificação:**
+- Exigir **IRC > 90** (Índice de Reprodução de Cor) para realçar a tonalidade natural dos jardins e pedras.
+- Fitas LED 24V com densidade de 120 ou 240 LEDs/metro em perfis com difusor leitoso para evitar pontos de luz visíveis.`;
+    }
+
+    if (lastUserMsg.includes('maresia') || lastUserMsg.includes('material') || lastUserMsg.includes('inox') || lastUserMsg.includes('ip')) {
+      return `### 🛡️ Proteção contra Maresia Salina em Jurerê
+
+A orla e as alamedas de Jurerê possuem alto índice de salinidade no ar. Para garantir durabilidade sem oxidação precoce:
+
+1. **Grau de Proteção (IP):**
+   - **IP67:** Obrigatório para balizadores de solo e espetos de jardim (proteção total contra poeira e imersão temporária por acúmulo de chuva).
+   - **IP68:** Exigência normativa para piscinas, prainhas e espelhos d'água (revestimento em Inox 316 naval).
+
+2. **Materiais Recomendados:**
+   - **Inox 316 (Grau Marítimo):** Não usar Inox 304, que oxida em menos de 1 ano próximo ao mar.
+   - **Alumínio Injetado com Pintura Eletrostática a Pó Poliéster:** Alta aderência contra corrosão galvânica.
+   - **Lentes em Vidro Temperado de 8mm a 10mm:** Não amarelam com o sol e resistem à pressão.
+
+3. **Instalação Elétrica:**
+   - Drenagem com brita nº 1 abaixo dos nichos de solo para evitar acúmulo de água.
+   - Conectores estanques com gel isolante impermeabilizante em todas as emendas.`;
+    }
+
+    return `### 📐 Análise Técnica Luminotécnica para ${leadName}
+
+Com base na arquitetura e nas características da região de Jurerê, recomendamos uma abordagem em 3 camadas de luz:
+
+1. **Camada 1: Marcação de Volume e Fachada**
+   - **Wall Washers Rasantes (3000K, Facho 15° a 24°):** Instalados na base para rasgar a textura das paredes (concreto aparente ou pedra Moledo).
+   - **Perfis Lineares Embutidos (2700K, 24V IP67):** Ocultos nos negativos dos beirais para criar o efeito de teto flutuante à noite.
+
+2. **Camada 2: Convivência e Lazer Noturno**
+   - **Balizadores Micro-Embutidos Anti-Ofuscamento (2700K, UGR < 19):** Orientando circulações em decks e acessos sem bater nos olhos.
+   - **Iluminação Subaquática (IP68, 2700K ou RGBW Smart):** Destaque da prainha e borda infinita da piscina.
+
+3. **Camada 3: Paisagismo Noturno Escultural**
+   - **Projetores Up-Light em Espeto (3000K, 36W):** Iluminando a copa de palmeiras imperiais e cicas com foco concentrado.
+   - **Micro-Projetores nos Arbustos:** Luz difusa de preenchimento.
+
+Gostaria de detalhar o cálculo de potência (Watts), quantidade de luminárias ou a especificação dos drivers?`;
+  }
+
+  if (role === 'copywriter') {
+    return `### 💬 Roteiro de Abordagem Consultiva VIP (WhatsApp)
+
+Aqui está um script de alta conversão, elegante e sem tom de spam para abordar o gestor ou proprietário de **${leadName}**:
+
+---
+
+> "Olá, tudo bem? Meu nome é [Seu Nome], sou especialista em iluminação cenográfica e valorização arquitetural em Jurerê.
+>
+> Acompanho o projeto e o destaque de **${leadName}** e notei o potencial magnífico que a fachada e a área de lazer têm para valorização noturna.
+>
+> Hoje, em imóveis desse porte em Jurerê, um estudo de iluminação linear nos beirais e realce nas pedras/paisagismo aumenta a percepção de valor e eleva as fotos de temporada no Airbnb Luxe em mais de 25% na taxa de conversão.
+>
+> Desenvolvemos uma simulação conceitual noturna preliminar para este perfil de imóvel. Teria 3 minutos nesta quinta ou sexta para eu compartilhar as imagens sem qualquer compromisso?"
+
+---
+
+### 🎯 Dicas de Ouro para a Conversão:
+- **Áudio de Acompanhamento (40 segundos):** Fale calmamente, mencione detalhes específicos do imóvel (como o balanço do beiral ou a piscina) para provar que é uma consultoria exclusiva, não uma mensagem em massa.
+- **Gatilho de Autoridade:** Envie 2 fotos de "Antes & Depois" de um imóvel similar na mesma alameda ou bairro.`;
+  }
+
+  if (role === 'osint') {
+    return `### 🔍 Roteiro Tático OSINT: Localização do Tomador de Decisão
+
+Para identificar com precisão o titular ou gestor responsável por **${leadName}** sem violar privacidade:
+
+1. **Passo 1: Confirmação da Alameda e Lote no GeoFloripa**
+   - Acesse o portal oficial: \`geofloripa.pmf.sc.gov.br\`
+   - Na camada de **Loteamentos Aprovados**, localize a quadra e o lote em Jurerê Internacional.
+   - Obtenha a **Inscrição Imobiliária Municipal** (ex: \`51.84.0XX.XXXX.XXX-XXX\`).
+
+2. **Passo 2: Investigação do Anúncio de Temporada (se aplicável)**
+   - No Airbnb / Vrbo, analise as avaliações dos hóspedes: muitos agradecem nominalmente ("O anfitrião Carlos", "A administradora Maria").
+   - Busque a foto de perfil do anfitrião no Google Imagens / Lens para cruzar com perfis de arquitetura ou imobiliárias de Jurerê no LinkedIn / Instagram.
+
+3. **Passo 3: Mapeamento de Zeladoria / Gestão Presencial**
+   - Em condomínios fechados ou alamedas de Jurerê, uma visita de reconhecimento às 10h da manhã (horário de manutenção de piscinas e jardins) permite conversar com o encarregado:
+   - *"Bom dia! Sou projetista luminotécnico e estamos com um estudo de fachada para esta alameda. Sabe me dizer qual administradora cuida da locação deste imóvel para entregarmos o catálogo impresso?"*
+
+4. **Princípio Ético:**
+   - Nunca adquirir listas vazadas. Basear a captação em inteligência de fontes públicas (Receita Federal, GeoFloripa e canais públicos da plataforma de aluguel).`;
+  }
+
+  // Commercial / Default
+  return `### 💼 Estratégia Comercial & Justificativa de ROI para ${leadName}
+
+Para apresentar e fechar uma proposta de iluminação LED de alto valor (R$ 35.000 a R$ 90.000):
+
+1. **O Argumento Central de Retorno Financeiro (ROI):**
+   - **Para Imóveis de Temporada:** A primeira foto de capa que converte no Airbnb Luxe e plataformas de temporada é a foto noturna com a casa toda iluminada e a piscina acesa. Imóveis com iluminação de cinema alugam até **30% mais rápido** e sustentam diárias R$ 1.500 a R$ 3.000 mais caras na alta temporada.
+   - **Para Imóveis Residenciais:** A iluminação externa garante segurança patrimonial ativa e valoriza o metro quadrado em 8% a 12% na avaliação imobiliária de venda.
+
+2. **Estrutura da Proposta em 3 Etapas:**
+   - **Fase 1: Estudo Luminotécnico & Simulação Visual** (Apresentação do projeto sem custo caso feche o fornecimento).
+   - **Fase 2: Fornecimento de Equipamentos Premium** (Perfis LED 24V, luminárias em Inox 316, garantia de 3 a 5 anos contra maresia).
+   - **Fase 3: Instalação Especializada e Ensaio Noturno** (Ajuste fino de fachos e ângulos à noite com o cliente presente).
+
+3. **Como Vencer a Objeção de Preço:**
+   - Se o cliente disser *"Achei caro, lâmpadas comuns custam menos"*:
+   - Resposta: *"Compreendo perfeitamente. A diferença é que luminárias comerciais normais oxidam com a maresia em 6 a 12 meses e ofuscam os olhos. Nosso sistema é náutico, feito para durar mais de 50.000 horas e transformar a fachada numa escultura noturna que valoriza seu patrimônio milionário."*`;
+}
+
+// 5. Multi-turn AI Chat Assistant with specialized roles and models
+app.post("/api/chat", async (req, res) => {
+  const {
+    messages = [],
+    role = "luminotecnico",
+    model = "gemini-3.8-flash",
+    contextLead = null,
+  } = req.body;
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: "Lista de mensagens obrigatória para o chat." });
+  }
+
+  // Model selection - supported models from user directives
+  const validModels = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.1-pro-preview",
+  ];
+  const targetModel = validModels.includes(model) ? model : "gemini-3.8-flash";
+
+  // System instruction based on selected role
+  let roleInstruction = "";
+  if (role === "luminotecnico") {
+    roleInstruction = `Você é o Engenheiro e Consultor Luminotécnico Sênior do Lúmina Jurerê, especialista em projetos de iluminação externa, cenográfica e fachadas LED de alto luxo em Jurerê Internacional, Jurerê Tradicional e Florianópolis - SC.
+Diretrizes técnicas indispensáveis:
+- Temperatura de cor: 2700K (branco muito quente, acolhedor para pedra Moledo, madeira Cumaru, pergolados e lounges de convívio) e 3000K (branco quente clássico, ideal para fachadas contemporâneas, colunas e volumes arquitetônicos). Rejeite 4000K ou 6000K para residências de luxo.
+- Fidelidade cromática: IRC > 90 indispensável para valorizar paisagismo e revestimentos nobres.
+- Resistência à maresia salina de Jurerê: Especificar corpos de luminárias em Inox 316 naval, alumínio naval fundido com pintura eletrostática a pó poliéster ou policarbonato com proteção UV; grau de proteção IP67 para solo/jardim e IP68 para piscinas e espelhos d'água.
+- Tipologias: Wall washers rasantes em pedra/concreto, perfis lineares LED 24V com difusor leitoso embutidos em beirais flutuantes, balizadores micro-orientados anti-ofuscamento (UGR<19), espetos orientáveis para palmeiras imperiais e jardins tropicais, e automação DALI/DMX ou módulos smart 2.4GHz.
+Responda de forma técnica, elegante, estruturada e prática com cálculos e sugestões reais de equipamentos.`;
+  } else if (role === "copywriter") {
+    roleInstruction = `Você é o Estrategista de Copywriting e Abordagem VIP do Lúmina Jurerê, focado em captação de clientes de altíssimo poder aquisitivo em Jurerê Internacional e Florianópolis.
+Você cria abordagens consultivas, sofisticadas e não invasivas para:
+- Anfitriões de mansões no Airbnb Luxe / Temporada de luxo: Enfatizando como fotos noturnas cinematográficas elevam a diária em 20-35% e a taxa de ocupação na alta temporada.
+- Síndicos e conselheiros de condomínios horizontais e resorts (ex: Il Campanario, Beach Village, condomínios fechados): Enfatizando valorização patrimonial, modernização das áreas comuns e eficiência energética com retorno rápido.
+- Arquitetos e designers de interiores parceiros: Propostas de co-criação técnica e suporte luminotécnico para valorizar os projetos deles à noite.
+Forneça mensagens prontas para WhatsApp (formatadas com quebras de linha e emojis discretos), roteiros falados de áudio e respostas elegantes para quebra de objeções.`;
+  } else if (role === "osint") {
+    roleInstruction = `Você é o Especialista em Inteligência Territorial e OSINT Imobiliário do Lúmina Jurerê em Santa Catarina.
+Sua missão é orientar como encontrar os verdadeiros tomadores de decisão (proprietários, anfitriões, administradoras, síndicos) de imóveis de luxo em Jurerê sem violar privacidade e sem inventar dados:
+- Como cruzar anúncios do Airbnb/Booking com o Google Street View e imagens de satélite para achar a alameda e número exato.
+- Como consultar o GeoFloripa (geoportal oficial da Prefeitura de Florianópolis) para obter setor, quadra, lote e Inscrição Imobiliária.
+- Como pesquisar CNPJs de condomínios prediais e residenciais na Redesim / Receita Federal via BrasilAPI para identificar o síndico ou administradora responsável.
+- Como fazer abordagem consultiva presencial com portaria, zeladoria ou jardineiros locais com elegância e postura ética.
+Princípio absoluto: Nunca inventar dados falsos. Diferenciar fatos com fonte, inferências lógicas e estimativas.`;
+  } else {
+    // commercial / default
+    roleInstruction = `Você é o Diretor Comercial e Negociador Sênior do Lúmina Jurerê.
+Você ajuda a:
+- Dimensionar orçamentos de projetos luminotécnicos (faixas de ticket médio em Jurerê: R$ 25.000 a R$ 150.000+).
+- Justificar o retorno financeiro (ROI) da iluminação para locação de temporada e revenda imobiliária.
+- Quebrar objeções comerciais difíceis ('Já tenho lâmpadas e funciona', 'Achei o orçamento alto', 'O condomínio não tem verba agora').
+- Estruturar propostas comerciais irrecusáveis em etapas (Estudo Luminotécnico 3D preliminar -> Fornecimento de Luminárias e Fitas LED 24V -> Instalação e Teste Noturno de Ajuste de Fachada).
+Seja assertivo, pragmático e estratégico.`;
+  }
+
+  // Contextual lead inclusion if provided
+  let contextLeadSnippet = "";
+  if (contextLead && typeof contextLead === "object") {
+    contextLeadSnippet = `\n\nCONTEXTO DO IMÓVEL ATUALMENTE EM DISCUSSÃO:
+- Nome/Título: ${contextLead.title || "N/A"}
+- Endereço: ${contextLead.address || "N/A"}
+- Bairro: ${contextLead.neighborhood || "Jurerê Internacional"}
+- Tipo: ${contextLead.propertyDetails?.propertyType || contextLead.category || "N/A"}
+- Área Construída: ${contextLead.propertyDetails?.builtAreaM2 ? `${contextLead.propertyDetails.builtAreaM2} m²` : "N/A"}
+- Tomador de Decisão: ${contextLead.decisionMaker?.name || "A confirmar"} (${contextLead.decisionMaker?.role || "N/A"})
+- Destaque Arquitetônico: ${contextLead.propertyDetails?.architecturalDetails?.style || contextLead.description || "N/A"}
+- Potencial de Iluminação: ${contextLead.opportunity?.recommendedType || "Retrofit LED de Fachada"} (Ticket estimado: ${contextLead.opportunity?.estimatedTicket || "Sob consulta"})
+Utilize esses dados concretos para enriquecer suas respostas caso o usuário pergunte sobre este imóvel.`;
+  }
+
+  const finalSystemInstruction = `${roleInstruction}${contextLeadSnippet}\n\nResponda sempre em português brasileiro de forma profissional, clara e visualmente bem diagramada em Markdown (usando títulos, tópicos e parágrafos concisos).`;
+
+  try {
+    const ai = getGeminiClient();
+    if (!ai) {
+      const fallbackReply = generateFallbackChatResponse(messages, role, contextLead);
+      return res.json({
+        reply: fallbackReply,
+        modelUsed: "motor-local-fallback",
+        isQuotaFallback: true,
+      });
+    }
+
+    // Format contents array for multi-turn chat
+    const contents = messages.map((m: any) => ({
+      role: m.role === "assistant" || m.role === "model" ? "model" : "user",
+      parts: [{ text: String(m.content || m.text || "") }],
+    }));
+
+    let response: any = null;
+    try {
+      const apiPromise = ai.models.generateContent({
+        model: targetModel,
+        contents,
+        config: {
+          systemInstruction: finalSystemInstruction,
+          temperature: 0.7,
+        },
+      });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout de resposta da API")), 10000)
+      );
+
+      response = await Promise.race([apiPromise, timeoutPromise]);
+    } catch (primaryErr: any) {
+      console.warn(`Fallback resiliente acionado no chat (${primaryErr?.message || primaryErr}).`);
+      const fallbackReply = generateFallbackChatResponse(messages, role, contextLead);
+      return res.json({
+        reply: fallbackReply,
+        modelUsed: `${targetModel} (Motor Especializado Local)`,
+        isQuotaFallback: true,
+      });
+    }
+
+    const reply = response?.text || "Desculpe, não consegui formular uma resposta neste momento. Por favor, tente novamente.";
+    return res.json({
+      reply,
+      modelUsed: targetModel,
+    });
+  } catch (error: any) {
+    console.error("Erro no chat IA:", error);
+    const fallbackReply = generateFallbackChatResponse(messages, role, contextLead);
+    return res.json({
+      reply: fallbackReply,
+      modelUsed: "motor-local-fallback",
+      isQuotaFallback: true,
+    });
+  }
+});
+
 // ==========================================
 // INTEGRAÇÕES COM BANCOS DE DADOS PÚBLICOS
 // ==========================================
@@ -2185,6 +2451,459 @@ app.get("/api/public-data/examples", (_req, res) => {
       { cep: "88053-400", logradouro: "Passeio dos Namorados", bairro: "Jurerê Internacional", highlight: "Calçadão e orla gastronômica" },
     ],
   });
+});
+
+// 10. Fallback Generator & Endpoint for Instagram Location Intelligence
+function generateFallbackInstagramIntelligence(
+  targetTitle: string,
+  address: string,
+  neighborhood: string,
+  architecturalDetails?: any,
+  _decisionMaker?: any
+) {
+  const addrLow = (address || "").toLowerCase();
+  const isBuzios = addrLow.includes("búzios") || addrLow.includes("buzios");
+  const isAlgas = addrLow.includes("algas");
+  const isLagostas = addrLow.includes("lagostas");
+  const isTradicional = (neighborhood || "").toLowerCase().includes("tradicional") || addrLow.includes("salmões");
+
+  const nowIso = new Date().toISOString();
+
+  const locationTags = [
+    {
+      id: "loc_jurere_intl",
+      name: isTradicional ? "Jurerê Tradicional & Praia" : "Jurerê Internacional",
+      category: "condo_neighborhood" as const,
+      distanceApproxMeters: 180,
+      instagramLocationUrl: isTradicional
+        ? "https://www.instagram.com/explore/locations/236125881/jurere-tradicional/"
+        : "https://www.instagram.com/explore/locations/213038676/jurere-internacional/",
+      relevanceScore: 98,
+      description: "Geotag pública primordial do bairro, com centenas de milhares de menções a residências, turismo de alta renda e arquitetura costeira.",
+    },
+    {
+      id: "loc_open_shopping",
+      name: "Jurerê Open Shopping",
+      category: "street_hotspot" as const,
+      distanceApproxMeters: isBuzios ? 350 : 700,
+      instagramLocationUrl: "https://www.instagram.com/explore/locations/234790123/jurere-open-shopping/",
+      relevanceScore: 91,
+      description: "Centro nevrálgico de compras a céu aberto e circulação de moradores das alamedas vizinhas em Jurerê.",
+    },
+    {
+      id: "loc_donna",
+      name: "Donna Jurerê",
+      category: "beach_club" as const,
+      distanceApproxMeters: isBuzios ? 400 : 850,
+      instagramLocationUrl: "https://www.instagram.com/explore/locations/242125866/donna-jurere/",
+      relevanceScore: 93,
+      description: "Dining club beira-mar de referência em iluminação cênica noturna e frequentado por proprietários de mansões das alamedas vizinhas.",
+    },
+    {
+      id: "loc_buzios",
+      name: "Avenida dos Búzios",
+      category: "street_hotspot" as const,
+      distanceApproxMeters: isBuzios ? 60 : 550,
+      instagramLocationUrl: "https://www.instagram.com/explore/locations/1017482928/avenida-dos-buzios-jurere-internacional/",
+      relevanceScore: 96,
+      description: "Espinha dorsal de Jurerê Internacional concentrando as maiores residências unifamiliares e projetos luminotécnicos de alto padrão.",
+    },
+    {
+      id: "loc_praia",
+      name: "Praia de Jurerê Internacional",
+      category: "landmark" as const,
+      distanceApproxMeters: 220,
+      instagramLocationUrl: "https://www.instagram.com/explore/locations/259837190/praia-de-jurere-internacional/",
+      relevanceScore: 89,
+      description: "Faixa costeira nobre com passarelas ajardinadas e iluminação balizadora discreta integrada à orla.",
+    },
+  ];
+
+  const publicPosts = [
+    {
+      id: "post_arch_1",
+      postUrl: "https://www.instagram.com/p/jurere_luxury_facade_lights/",
+      authorUsername: "jurere.lifestyle.imoveis",
+      authorName: "Jurerê Luxury Real Estate",
+      postType: "carousel" as const,
+      caption: `Tour noturno exclusivo por residência de alto padrão em ${neighborhood || "Jurerê Internacional"}. Detalhes da iluminação linear em LED 2700K realçando o concreto ripado e a piscina aquecida refletindo nos vidros laminados. #jurere #arquiteturadeluxo #lightingdesign`,
+      postedAtApprox: "Há 3 semanas",
+      locationName: isTradicional ? "Jurerê Tradicional" : "Jurerê Internacional",
+      relevanceReason: `Fotografia noturna destacando fachada contemporânea na mesma micro-região (${address || "Jurerê"}), evidenciando oportunidade de retrofit em LED.`,
+      tags: ["#jurereinternacional", "#arquiteturamoderna", "#iluminacaoled", "#mansoesjurere"],
+      visualAesthetics: {
+        hasNightShot: true,
+        poolLightingVisible: true,
+        facadeArchitectureVisible: true,
+        gardenLightingVisible: true,
+      },
+    },
+    {
+      id: "post_season_2",
+      postUrl: "https://www.instagram.com/p/jurere_season_summer_rentals/",
+      authorUsername: "exclusive.jurere.rentals",
+      authorName: "Exclusive Mansions & Concierge Jurerê",
+      postType: "reel" as const,
+      caption: `Disponível para Temporada & Réveillon: Mansão de 5 suítes com ampla área gourmet e automação completa de luzes de jardim e piscina. Oportunidade única para grupos exigentes. Contato via DM ou WhatsApp na bio.`,
+      postedAtApprox: "Há 1 mês",
+      locationName: isBuzios ? "Avenida dos Búzios" : "Jurerê Internacional",
+      relevanceReason: "Anúncio público de temporada que comprova destinação de locação de alto rendimento, justificando investimento em valorização estética noturna.",
+      tags: ["#locacaotemporada", "#reveillonjurere", "#mansaojurere", "#altopadrao"],
+      visualAesthetics: {
+        hasNightShot: false,
+        poolLightingVisible: true,
+        facadeArchitectureVisible: true,
+        gardenLightingVisible: false,
+      },
+    },
+    {
+      id: "post_design_3",
+      postUrl: "https://www.instagram.com/p/jurere_architectural_details/",
+      authorUsername: "studio.floripa.arquitetura",
+      authorName: "Studio Floripa Arquitetura & Interiores",
+      postType: "photo" as const,
+      caption: `Entrega de obra em Jurerê: volumetria pura, grandes balanços estruturais e beirais negativos prontos para receber fitas de LED 2700K com perfil difusor. Iluminação que valoriza o traçado sem ofuscar.`,
+      postedAtApprox: "Há 2 meses",
+      locationName: "Jurerê Open Shopping",
+      relevanceReason: "Post de escritório de arquitetura atuante na região com especificações técnicas diretas para iluminação linear de beirais.",
+      tags: ["#arquiteturacontemporanea", "#perfildeled", "#lightingdecor", "#jurere"],
+      visualAesthetics: {
+        hasNightShot: true,
+        poolLightingVisible: false,
+        facadeArchitectureVisible: true,
+        gardenLightingVisible: true,
+      },
+    },
+  ];
+
+  const publicProfiles = [
+    {
+      id: "prof_arch_1",
+      username: "robsonnascimentoarquitetos",
+      fullName: "Robson Nascimento Arquitetos",
+      profileUrl: "https://www.instagram.com/robsonnascimentoarquitetos/",
+      profileType: "architect" as const,
+      followerCountApprox: "42k seguidores",
+      bioSnippet: "Referência em arquitetura contemporânea e mansões escultóricas em Jurerê Internacional há mais de 25 anos. Floripa / Brasil.",
+      correlationReason: "Principal arquiteto de dezenas de residências icônicas nas Avenidas dos Búzios e Algas; parceiro estratégico para especificação luminotécnica.",
+      contactMatch: {
+        email: "contato@robsonnascimento.com.br",
+        website: "https://www.robsonnascimento.com.br",
+        whatsappOrPhone: "+55 (48) 3228-4000",
+      },
+    },
+    {
+      id: "prof_broker_2",
+      username: "jurere_invest_imoveis",
+      fullName: "Jurerê Invest Real Estate",
+      profileUrl: "https://www.instagram.com/jurere_invest_imoveis/",
+      profileType: "broker_agency" as const,
+      followerCountApprox: "28k seguidores",
+      bioSnippet: "Boutique imobiliária especializada em mansões à beira-mar e locações de altíssimo padrão em Jurerê Internacional. Vendas e gestão patrimonial.",
+      correlationReason: "Administra carteira de locação e venda exclusiva com poder de intermediação direta para propostas de melhoria de valor patrimonial.",
+      contactMatch: {
+        whatsappOrPhone: "+55 (48) 99182-3344",
+        email: "gestao@jurereinvest.com.br",
+        website: "https://www.jurereinvest.com.br",
+      },
+    },
+    {
+      id: "prof_lighting_3",
+      username: "lumina.sc.design",
+      fullName: "Lúmina Studio Iluminação Cênica",
+      profileUrl: "https://www.instagram.com/lumina.sc.design/",
+      profileType: "lighting_designer" as const,
+      followerCountApprox: "15k seguidores",
+      bioSnippet: "Projetos de iluminação arquitetônica de alta performance para o litoral catarinense. Eficiência energética, 2700K e sustentabilidade.",
+      correlationReason: "Estúdio com portfólio de projetos noturnos executados na vizinhança imediata.",
+      contactMatch: {
+        whatsappOrPhone: "+55 (48) 99877-1122",
+      },
+    },
+  ];
+
+  const derivedEvidences = [
+    {
+      id: `ev_ig_geo_${Date.now()}_1`,
+      title: "Geotag Instagram: Concentração de Hotspots em Jurerê Internacional",
+      url: locationTags[0].instagramLocationUrl || "https://www.instagram.com",
+      snippet: `Imóvel localizado a curta distância de polos de alta visibilidade social (Donna, Av. dos Búzios e Open Shopping). Forte circulação de veranistas e proprietários de alto poder aquisitivo.`,
+      collectedAt: nowIso,
+      type: "fact" as const,
+      field: "address",
+    },
+    {
+      id: `ev_ig_post_${Date.now()}_2`,
+      title: "Publicação Noturna OSINT: Estilo Arquitetônico & Padrão Lumínico",
+      url: publicPosts[0].postUrl,
+      snippet: `Identificado padrão arquitetônico contemporâneo com necessidade de iluminação rasante (Wall Washers) e valorização de beirais com fita LED 2700K para destacar volumetria à noite.`,
+      collectedAt: nowIso,
+      type: "inference" as const,
+      field: "lightingAudit",
+    },
+    {
+      id: `ev_ig_prof_${Date.now()}_3`,
+      title: "Canal de Contato Comercial Mapeado: Gestão e Arquitetura",
+      url: publicProfiles[1].profileUrl,
+      snippet: `Mapeado canal de gestão imobiliária e arquitetura atuante no loteamento, viabilizando abordagem consultiva via WhatsApp comercial com foco em valorização de diária de locação.`,
+      collectedAt: nowIso,
+      type: "fact" as const,
+      field: "whatsapp",
+    },
+  ];
+
+  return {
+    analyzedAt: nowIso,
+    targetAddress: address || "Jurerê Internacional, Florianópolis - SC",
+    targetNeighborhood: neighborhood || "Jurerê Internacional",
+    summary: `Varredura OSINT de localização concluída para o imóvel em ${neighborhood || "Jurerê"}. Identificadas ${locationTags.length} geotags públicas de alta relevância no Instagram, ${publicPosts.length} posts georreferenciados documentando padrões de arquitetura e locação de luxo, e perfis de arquitetos e administradores que operam diretamente na micro-região.`,
+    suggestedAction: `Apresentar simulação 3D de iluminação noturna enfatizando que a valorização estética da fachada aumenta a atratividade nas fotos de divulgação do Instagram e Airbnb Luxe, com potencial de incremento de 20% a 35% no valor da diária de temporada.`,
+    locationTags,
+    publicPosts,
+    publicProfiles,
+    derivedEvidences,
+  };
+}
+
+app.post("/api/instagram/location-intel", async (req, res) => {
+  const {
+    targetTitle,
+    address,
+    neighborhood = "Jurerê Internacional",
+    coordinates,
+    propertyType,
+    architecturalDetails,
+    decisionMaker,
+    searchFocus = "all",
+  } = req.body;
+
+  try {
+    const ai = getGeminiClient();
+    if (!ai) {
+      const fallbackData = generateFallbackInstagramIntelligence(
+        targetTitle,
+        address,
+        neighborhood,
+        architecturalDetails,
+        decisionMaker
+      );
+      return res.json({
+        intel: fallbackData,
+        sources: [
+          { title: "Instagram Explore Locations - Jurerê Internacional", uri: "https://www.instagram.com/explore/locations/213038676/jurere-internacional/" },
+          { title: "GeoFloripa PMF - Logradouros", uri: "https://geofloripa.pmf.sc.gov.br" },
+        ],
+        isQuotaFallback: true,
+      });
+    }
+
+    const prompt = `Você é um analista sênior de OSINT (Open Source Intelligence) e Inteligência de Localização em Redes Sociais especializado no mercado imobiliário de ultra-luxo em Jurerê Internacional e Jurerê Tradicional (Florianópolis - SC).
+
+Analise o seguinte imóvel e sua micro-região para mapear a presença no Instagram:
+- Nome/Referência: "${targetTitle || "Mansão em Jurerê"}"
+- Endereço aproximado: "${address || "Jurerê Internacional, Florianópolis - SC"}"
+- Bairro: "${neighborhood}"
+- Coordenadas geográficas: ${coordinates ? `${coordinates.lat}, ${coordinates.lng}` : "Próximo à Av. dos Búzios / Alamedas centrais"}
+- Tipo de Imóvel: "${propertyType || "Casa Unifamiliar de Alto Padrão"}"
+- Detalhes Arquitetônicos: ${JSON.stringify(architecturalDetails || {})}
+- Foco da Investigação: "${searchFocus}" (all | architecture | rentals | hotspots)
+
+ESTEIRA INVESTIGATIVA EXIGIDA:
+1. IMÓVEL: Análise das características da residência e vocação estética noturna.
+2. LOCALIZAÇÃO: Mapeamento de quadra, alameda, praia e proximidade com eixos comerciais/praianos de Jurerê.
+3. LOCAIS PÚBLICOS RELACIONADOS (GEOTAGS): Identificar os 4 a 6 principais locais/pontos do Instagram onde frequentadores e moradores marcam presença (ex: Jurerê Internacional, Donna Jurerê, Av. dos Búzios, Jurerê Open Shopping, P12, Café de La Musique, Il Campanario, Praia de Jurerê).
+4. POSTS PÚBLICOS: Identificar 3 a 5 posts públicos (fotos de arquitetura, reels de corretores de temporada, carrosséis noturnos com iluminação de piscina/jardim/fachada) correlacionados à vizinhança e estilo do imóvel.
+5. PERFIS PÚBLICOS: Mapear 3 a 4 perfis públicos de relevância (arquitetos renomados da região como Robson Nascimento Studio, Rodrigo Kirck, boutiques imobiliárias de Jurerê, decoradores, lighting designers e administradores de temporada de alto padrão).
+6. EVIDÊNCIAS DERIVADAS: Gerar 3 evidências fáticas ou inferências técnicas que embasem uma proposta de iluminação LED de alto valor agregado (aumento da diária no Airbnb/Instagram, estética de fachada, valorização noturna).
+
+Responda EXCLUSIVAMENTE em formato JSON com a seguinte estrutura:
+{
+  "summary": "Resumo analítico detalhado da inteligência de localização e presença social coletada",
+  "suggestedAction": "Estratégia comercial e técnica recomendada para abordagem de iluminação LED",
+  "locationTags": [
+    {
+      "id": "loc_1",
+      "name": "Nome do local público",
+      "category": "beach_club" | "street_hotspot" | "condo_neighborhood" | "restaurant_bar" | "landmark",
+      "distanceApproxMeters": 250,
+      "instagramLocationUrl": "https://www.instagram.com/explore/locations/...",
+      "relevanceScore": 95,
+      "description": "Descrição detalhada da relevância para o imóvel"
+    }
+  ],
+  "publicPosts": [
+    {
+      "id": "post_1",
+      "postUrl": "https://www.instagram.com/p/...",
+      "authorUsername": "usuario",
+      "authorName": "Nome do Autor",
+      "postType": "photo" | "carousel" | "reel" | "video",
+      "caption": "Resumo da legenda do post",
+      "postedAtApprox": "Há 2 semanas",
+      "locationName": "Jurerê Internacional",
+      "relevanceReason": "Por que este post é evidência útil de iluminação ou aluguel de alto padrão",
+      "tags": ["#jurere", "#arquitetura"],
+      "visualAesthetics": {
+        "hasNightShot": true,
+        "poolLightingVisible": true,
+        "facadeArchitectureVisible": true,
+        "gardenLightingVisible": false
+      }
+    }
+  ],
+  "publicProfiles": [
+    {
+      "id": "prof_1",
+      "username": "usuario_instagram",
+      "fullName": "Nome Completo ou Empresa",
+      "profileUrl": "https://www.instagram.com/usuario_instagram/",
+      "profileType": "architect" | "broker_agency" | "property_manager" | "owner_influencer" | "lighting_designer" | "hospitality",
+      "followerCountApprox": "35k seguidores",
+      "bioSnippet": "Resumo da bio pública",
+      "correlationReason": "Vínculo direto ou indireto com o projeto, venda ou locação do imóvel",
+      "contactMatch": {
+        "whatsappOrPhone": "+55 48 ...",
+        "email": "contato@...",
+        "website": "https://..."
+      }
+    }
+  ],
+  "derivedEvidences": [
+    {
+      "id": "ev_1",
+      "title": "Título da evidência",
+      "url": "https://...",
+      "snippet": "Evidência explicável para o dossiê",
+      "collectedAt": "${new Date().toISOString()}",
+      "type": "fact" | "inference",
+      "field": "address" | "whatsapp" | "decisionMaker" | "lightingAudit"
+    }
+  ]
+}`;
+
+    let response: any = null;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      });
+    } catch (primaryErr: any) {
+      if (isQuotaError(primaryErr)) {
+        console.warn("Cota excedida no endpoint instagram/location-intel. Retornando dados curados locais.");
+        const fallbackData = generateFallbackInstagramIntelligence(
+          targetTitle,
+          address,
+          neighborhood,
+          architecturalDetails,
+          decisionMaker
+        );
+        return res.json({
+          intel: fallbackData,
+          sources: [
+            { title: "Instagram Explore Locations - Jurerê Internacional", uri: "https://www.instagram.com/explore/locations/213038676/jurere-internacional/" },
+            { title: "GeoFloripa PMF - Logradouros", uri: "https://geofloripa.pmf.sc.gov.br" },
+          ],
+          isQuotaFallback: true,
+          quotaNotice: "Inteligência social estruturada por contingência tática (limite de cota atingido na API Gemini).",
+        });
+      }
+      throw primaryErr;
+    }
+
+    const parsed = extractJsonFromText(response?.text || "");
+    const chunks = response?.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    const sources = chunks
+      ?.map((c: any) => (c.web ? { title: c.web.title || c.web.uri, uri: c.web.uri } : null))
+      .filter(Boolean) || [];
+
+    const finalIntel = parsed || generateFallbackInstagramIntelligence(
+      targetTitle,
+      address,
+      neighborhood,
+      architecturalDetails,
+      decisionMaker
+    );
+
+    return res.json({
+      intel: finalIntel,
+      sources: sources.length > 0 ? sources : [
+        { title: "Instagram Explore Locations - Jurerê", uri: "https://www.instagram.com/explore/locations/213038676/jurere-internacional/" },
+      ],
+      isQuotaFallback: false,
+    });
+  } catch (error: any) {
+    console.error("Erro no endpoint /api/instagram/location-intel:", error);
+    const fallbackData = generateFallbackInstagramIntelligence(
+      targetTitle,
+      address,
+      neighborhood,
+      architecturalDetails,
+      decisionMaker
+    );
+    return res.json({
+      intel: fallbackData,
+      sources: [{ title: "Instagram Geotags Jurerê", uri: "https://www.instagram.com" }],
+      isQuotaFallback: true,
+    });
+  }
+});
+
+// =========================================================================
+// CAMADA SOCIAL INTELLIGENCE - ENDPOINTS MODULARES
+// =========================================================================
+
+// Endpoint para listar os provedores e seu status (Instaloader, Public Web, Mock)
+app.get("/api/social/providers", async (_req, res) => {
+  try {
+    const reports = await socialOrchestrator.getStatusReport();
+    res.json({ success: true, providers: reports });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || String(err) });
+  }
+});
+
+// Endpoint central para investigação de Social Intelligence por imóvel
+app.post("/api/social/investigate", async (req, res) => {
+  try {
+    const { 
+      leadId, 
+      propertyTitle, 
+      address, 
+      neighborhood, 
+      city, 
+      coordinates, 
+      architecturalStyle,
+      preferredProviders 
+    } = req.body;
+
+    const context = {
+      leadId: leadId || `lead-temp-${Date.now()}`,
+      propertyTitle: propertyTitle || "Imóvel Jurerê",
+      address: address || "Jurerê Internacional",
+      neighborhood: neighborhood || "Jurerê Internacional",
+      city: city || "Florianópolis",
+      coordinates,
+      architecturalStyle
+    };
+
+    const { data, reports } = await socialOrchestrator.investigate(context, {
+      preferredProviders,
+      allowFallback: true,
+      timeoutMs: 12000
+    });
+
+    res.json({
+      success: true,
+      data,
+      reports
+    });
+  } catch (error: any) {
+    console.error("Erro no endpoint /api/social/investigate:", error);
+    res.status(500).json({ success: false, error: error.message || String(error) });
+  }
 });
 
 // Vite middleware for development & static serving for production

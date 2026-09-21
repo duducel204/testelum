@@ -185,6 +185,8 @@ export interface LeadTarget {
     phone?: string;
     evidenceUrl?: string;
   };
+  instagramIntelligence?: InstagramIntelligenceData;
+  socialIntelligence?: SocialIntelligenceData;
   cachedAt?: string;
   isQuotaFallback?: boolean;
   createdAt: string;
@@ -280,3 +282,213 @@ export interface GeocodeQueryResult {
     postcode?: string;
   };
 }
+
+export type GeminiModelId = 
+  | 'gemini-3.8-flash'
+  | 'gemini-3.5-flash'
+  | 'gemini-3.1-flash-lite'
+  | 'gemini-3.1-pro-preview';
+
+export type ChatRole = 'luminotecnico' | 'copywriter' | 'osint' | 'commercial';
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  content: string;
+  timestamp: string;
+  modelUsed?: string;
+  isError?: boolean;
+}
+
+// ==========================================
+// INSTAGRAM LOCATION INTELLIGENCE TYPES
+// Pipeline: IMÓVEL -> LOCALIZAÇÃO -> LOCAIS PÚBLICOS -> POSTS PÚBLICOS -> PERFIS PÚBLICOS -> EVIDÊNCIAS
+// ==========================================
+
+export interface InstagramLocationTag {
+  id: string;
+  name: string; // ex: "Jurerê Internacional", "Avenida dos Búzios", "Jurerê Open Shopping", "Donna Jurerê"
+  category: 'beach_club' | 'street_hotspot' | 'condo_neighborhood' | 'restaurant_bar' | 'landmark';
+  distanceApproxMeters?: number;
+  instagramLocationUrl?: string;
+  relevanceScore: number; // 0-100
+  description: string;
+}
+
+export interface InstagramPublicPost {
+  id: string;
+  postUrl: string;
+  authorUsername: string;
+  authorName?: string;
+  postType: 'photo' | 'carousel' | 'reel' | 'video';
+  caption: string;
+  postedAtApprox?: string;
+  locationName?: string;
+  relevanceReason: string; // ex: "Menciona mansão na Av. dos Búzios e projeto luminotécnico"
+  tags: string[];
+  visualAesthetics?: {
+    hasNightShot?: boolean;
+    poolLightingVisible?: boolean;
+    facadeArchitectureVisible?: boolean;
+    gardenLightingVisible?: boolean;
+  };
+}
+
+export interface InstagramPublicProfile {
+  id: string;
+  username: string;
+  fullName: string;
+  profileUrl: string;
+  profileType: 'architect' | 'broker_agency' | 'property_manager' | 'owner_influencer' | 'lighting_designer' | 'hospitality';
+  followerCountApprox?: string;
+  bioSnippet?: string;
+  correlationReason: string; // ex: "Arquiteto autor do projeto da residência em Jurerê"
+  contactMatch?: {
+    whatsappOrPhone?: string;
+    email?: string;
+    website?: string;
+  };
+}
+
+export interface InstagramIntelligenceData {
+  analyzedAt: string;
+  targetAddress: string;
+  targetNeighborhood: string;
+  summary: string;
+  suggestedAction: string;
+  locationTags: InstagramLocationTag[];
+  publicPosts: InstagramPublicPost[];
+  publicProfiles: InstagramPublicProfile[];
+  derivedEvidences: EvidenceSource[];
+}
+
+// ==========================================
+// CANONICAL SOCIAL INTELLIGENCE DATA CONTRACTS
+// ==========================================
+
+export type SocialPlatform = 
+  | 'instagram'
+  | 'airbnb'
+  | 'google'
+  | 'public_web'
+  | 'real_estate'
+  | 'directory'
+  | string;
+
+/**
+ * Representa um local público associado a uma fonte social/web.
+ */
+export interface SocialLocation {
+  id: string;
+  platform: SocialPlatform;
+  name: string;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  sourceUrl?: string;
+  collectedAt?: string;
+}
+
+/**
+ * Representa conteúdo ou postagem pública encontrada em fonte aberta.
+ */
+export interface PublicSocialPost {
+  id: string;
+  platform: SocialPlatform;
+  url: string;
+  publishedAt?: string;
+  location?: string | SocialLocation;
+  captionSnippet?: string;
+  authorPublicHandle?: string;
+  collectedAt: string;
+  sourceProvider?: string;
+}
+
+/**
+ * Representa somente informações públicas mínimas sobre um perfil encontrado.
+ * Sem perfilamento comportamental ou deduções de intimidade.
+ */
+export interface PublicSocialProfile {
+  id: string;
+  platform: SocialPlatform;
+  publicHandle: string;
+  profileUrl?: string;
+  displayName?: string;
+  profileType?: string; // ex: 'arquiteto', 'imobiliaria', 'turista', 'influenciador', 'comercio'
+  collectedAt: string;
+}
+
+/**
+ * Representa uma evidência verificável encontrada em fonte pública.
+ * Interopera com a taxonomia nativa EvidenceSource do Lúmina (fact vs inference vs estimate).
+ * REGRA: O fato de uma postagem pública marcar o local X comprova unicamente
+ * a existência daquela publicação, não posse, residência ou poder de decisão.
+ */
+export interface SocialEvidence {
+  id: string;
+  leadId: string;
+  platform: SocialPlatform;
+  sourceType: string; // ex: 'post_location_tag', 'caption_mention', 'profile_bio', 'geo_tag'
+  sourceUrl: string;
+  observedAt?: string;
+  collectedAt: string;
+  description: string;
+  confidence: 'high' | 'medium' | 'low' | number;
+  evidenceType?: EvidenceType; // 'fact' (conteúdo público observável) | 'inference' (relação sugerida)
+}
+
+export type RelationshipType =
+  | 'morador_presumido'
+  | 'proprietario_presumido'
+  | 'arquiteto_ou_designer'
+  | 'corretor_ou_imobiliaria'
+  | 'prestador_servico'
+  | 'visitante_ou_turista'
+  | 'inquilino_temporada'
+  | string;
+
+export type HypothesisStatus =
+  | 'unverified'
+  | 'under_review'
+  | 'supported'
+  | 'rejected';
+
+/**
+ * Representa estritamente uma HIPÓTESE relacional, NUNCA um fato comprovado.
+ * Vincula evidências verificáveis a um perfil sem assumir automaticamente decisão ou propriedade.
+ */
+export interface RelationshipHypothesis {
+  id: string;
+  leadId: string;
+  subjectProfileId: string;
+  relationshipType: RelationshipType;
+  confidence: 'high' | 'medium' | 'low' | number;
+  evidenceIds: string[];
+  status: HypothesisStatus;
+  notes?: string;
+}
+
+export interface SocialIntelligenceMetadata {
+  provider?: string;
+  platform?: SocialPlatform;
+  investigationId?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  status?: 'idle' | 'running' | 'completed' | 'failed' | string;
+  mock?: boolean;
+}
+
+/**
+ * Container genérico de Inteligência Social do Lead/Imóvel.
+ * Agrupa fontes públicas (Instagram, Airbnb, Google, portais) sem acoplamento a um provedor específico.
+ */
+export interface SocialIntelligenceData {
+  locations: SocialLocation[];
+  posts: PublicSocialPost[];
+  profiles: PublicSocialProfile[];
+  evidence: SocialEvidence[];
+  relationshipHypotheses: RelationshipHypothesis[];
+  metadata?: SocialIntelligenceMetadata;
+}
+
+

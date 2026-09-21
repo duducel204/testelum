@@ -23,6 +23,9 @@ import { ExportModal } from './components/ExportModal';
 import { InteractiveMapView } from './components/InteractiveMapView';
 import { AdvancedSearchFiltersBar } from './components/AdvancedSearchFiltersBar';
 import { PropertyProfileModal } from './components/PropertyProfileModal';
+import { InstagramIntelligenceModal } from './components/InstagramIntelligenceModal';
+import { SocialIntelligenceModal } from './components/SocialIntelligenceModal';
+import { AiChatAssistant } from './components/AiChatAssistant';
 import { 
   Search, 
   Sparkles, 
@@ -39,7 +42,8 @@ import {
   AlertCircle,
   Map as MapIcon,
   LayoutGrid,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Bot
 } from 'lucide-react';
 
 const STORAGE_KEY = 'lumina_jurere_leads_v1';
@@ -82,7 +86,7 @@ export default function App() {
   });
 
   const [currentCity, setCurrentCity] = useState<string>('Jurerê Internacional, Florianópolis - SC');
-  const [activeTab, setActiveTab] = useState<'radar' | 'map' | 'pipeline' | 'investigator' | 'public_db' | 'osint'>('radar');
+  const [activeTab, setActiveTab] = useState<'radar' | 'map' | 'pipeline' | 'investigator' | 'public_db' | 'osint' | 'ai_chat'>('radar');
 
   // Advanced Search & Filter State
   const [filters, setFilters] = useState<AdvancedSearchFilters>(defaultFilters);
@@ -94,7 +98,10 @@ export default function App() {
   const [pitchTargetLead, setPitchTargetLead] = useState<LeadTarget | null>(null);
   const [investigateLead, setInvestigateLead] = useState<{ name: string; address: string } | null>(null);
   const [selectedProfileLead, setSelectedProfileLead] = useState<LeadTarget | null>(null);
+  const [instagramIntelLead, setInstagramIntelLead] = useState<LeadTarget | null>(null);
+  const [socialIntelLead, setSocialIntelLead] = useState<LeadTarget | null>(null);
   const [focusMapLeadId, setFocusMapLeadId] = useState<string | null>(null);
+  const [chatContextLead, setChatContextLead] = useState<LeadTarget | null>(null);
   const [hasBackup, setHasBackup] = useState<boolean>(() => {
     return !!localStorage.getItem('lumina_jurere_backup_latest');
   });
@@ -636,6 +643,8 @@ export default function App() {
                     onViewOnMap={(l) => handleNavigateToMap(l)}
                     onVerifyContact={handleVerifyContact}
                     onResolveReview={handleResolveReview}
+                    onOpenInstagramIntel={(l) => setInstagramIntelLead(l)}
+                    onOpenSocialIntel={(l) => setSocialIntelLead(l)}
                   />
                 ))}
               </div>
@@ -765,6 +774,17 @@ export default function App() {
             <OsintGuideView />
           </div>
         )}
+
+        {/* TAB 7: Auxílio IA (Multi-turn Gemini Chatbot) */}
+        {activeTab === 'ai_chat' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <AiChatAssistant
+              leads={leads}
+              initialContextLead={chatContextLead}
+              onClearContextLead={() => setChatContextLead(null)}
+            />
+          </div>
+        )}
       </main>
 
       {/* MODAL 1: Perfil Detalhado do Imóvel & Ficha Técnica */}
@@ -773,10 +793,47 @@ export default function App() {
         isOpen={!!selectedProfileLead}
         onClose={() => setSelectedProfileLead(null)}
         onNavigateToMap={(l) => handleNavigateToMap(l)}
+        onConsultAi={(l) => {
+          setChatContextLead(l);
+          setActiveTab('ai_chat');
+          setSelectedProfileLead(null);
+        }}
         onUpdateLead={(updatedLead) => {
           setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)));
           setSelectedProfileLead(updatedLead);
           showToast(`Matrícula e dados cadastrais de "${updatedLead.title}" salvos!`);
+        }}
+        onOpenInstagramIntel={(l) => setInstagramIntelLead(l)}
+        onOpenSocialIntel={(l) => setSocialIntelLead(l)}
+      />
+
+      {/* MODAL: Instagram Location Intelligence */}
+      <InstagramIntelligenceModal
+        isOpen={!!instagramIntelLead}
+        onClose={() => setInstagramIntelLead(null)}
+        targetLead={instagramIntelLead}
+        onUpdateLead={(updatedLead) => {
+          setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)));
+          setInstagramIntelLead(updatedLead);
+          if (selectedProfileLead?.id === updatedLead.id) {
+            setSelectedProfileLead(updatedLead);
+          }
+          showToast(`Inteligência de Instagram e evidências salvas para "${updatedLead.title}"!`);
+        }}
+      />
+
+      {/* MODAL: Social Intelligence Multi-Provider (OSINT) */}
+      <SocialIntelligenceModal
+        isOpen={!!socialIntelLead}
+        onClose={() => setSocialIntelLead(null)}
+        targetLead={socialIntelLead}
+        onUpdateLead={(updatedLead) => {
+          setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)));
+          setSocialIntelLead(updatedLead);
+          if (selectedProfileLead?.id === updatedLead.id) {
+            setSelectedProfileLead(updatedLead);
+          }
+          showToast(`Dossiê de Social Intelligence salvo para "${updatedLead.title}"!`);
         }}
       />
 
@@ -819,6 +876,19 @@ export default function App() {
         onClose={() => setIsExportOpen(false)}
         leads={leads}
       />
+
+      {/* Quick Access Floating Chatbot Trigger */}
+      {activeTab !== 'ai_chat' && (
+        <button
+          onClick={() => setActiveTab('ai_chat')}
+          className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-bold px-4 py-3 rounded-2xl shadow-xl shadow-amber-500/25 flex items-center gap-2.5 transition-all transform hover:scale-105 cursor-pointer border border-amber-300/40"
+          title="Abrir Auxílio IA com Gemini"
+        >
+          <Bot className="w-5 h-5 text-slate-950" />
+          <span className="text-xs font-extrabold hidden sm:inline">Auxílio IA</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-700 animate-pulse" />
+        </button>
+      )}
     </div>
   );
 }

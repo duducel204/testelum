@@ -73,7 +73,7 @@ export const PublicDatabaseView: React.FC<PublicDatabaseViewProps> = ({
   const [cadTestada, setCadTestada] = useState('20');
   const [cadTitular, setCadTitular] = useState('');
   const [cadCartorio, setCadCartorio] = useState('2º Ofício de Registro de Imóveis de Florianópolis');
-  const [cadAverbacao, setCadAverbacao] = useState<'Averbado / Regular' | 'Em processo' | 'Lote sem averbação'>('Averbado / Regular');
+  const [cadAverbacao, setCadAverbacao] = useState<'Averbado / Regular' | 'Em Regularização' | 'Escritura Pública' | 'Pendente'>('Averbado / Regular');
   const [cadSavedNotice, setCadSavedNotice] = useState<string | null>(null);
 
   // When selected lead changes, populate fields
@@ -199,7 +199,7 @@ export const PublicDatabaseView: React.FC<PublicDatabaseViewProps> = ({
             },
             salesRentalHistory: {
               estimatedMarketValue: 'R$ 16.000.000',
-              listingStatus: 'Uso Próprio / Temporada',
+              listingStatus: 'Temporada Ativa',
               historicalNotes: 'Cadastrado no módulo GeoFloripa.'
             },
             lightingPotentialAudit: {
@@ -210,7 +210,7 @@ export const PublicDatabaseView: React.FC<PublicDatabaseViewProps> = ({
               gardenLandscapeSuitability: 'Up-lights em palmeiras imperiais',
               recommendedColorTemp: '2700K - 3000K',
               estimatedFixtureCount: 32,
-              technicalFeasibility: 'Alta Viabilidade'
+              technicalFeasibility: 'Imediata (Tubulação aparente/espera existente)'
             }
           },
           decisionMaker: {
@@ -979,8 +979,9 @@ ${(cnpjResult.qsa || []).map(s => `- ${s.nome_socio} (${s.qualificacao_socio})`)
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400 cursor-pointer"
                 >
                   <option value="Averbado / Regular">Averbado / Regular (Habite-se Concluído)</option>
-                  <option value="Em processo">Em processo de Averbação</option>
-                  <option value="Lote sem averbação">Lote sem averbação da obra</option>
+                  <option value="Em Regularização">Em Regularização de Obra</option>
+                  <option value="Escritura Pública">Escritura Pública Lavrada</option>
+                  <option value="Pendente">Pendente de Averbação</option>
                 </select>
               </div>
 

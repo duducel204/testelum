@@ -34,7 +34,8 @@ import {
   FileCheck,
   CheckCircle,
   Clock,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Globe2
 } from 'lucide-react';
 
 interface LeadCardProps {
@@ -48,6 +49,8 @@ interface LeadCardProps {
   onViewOnMap?: (lead: LeadTarget) => void;
   onVerifyContact?: (leadId: string) => void;
   onResolveReview?: (leadId: string) => void;
+  onOpenInstagramIntel?: (lead: LeadTarget) => void;
+  onOpenSocialIntel?: (lead: LeadTarget) => void;
 }
 
 export const LeadCard: React.FC<LeadCardProps> = ({
@@ -60,7 +63,9 @@ export const LeadCard: React.FC<LeadCardProps> = ({
   onViewProfile,
   onViewOnMap,
   onVerifyContact,
-  onResolveReview
+  onResolveReview,
+  onOpenInstagramIntel,
+  onOpenSocialIntel
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
@@ -277,6 +282,28 @@ Ticket Estimado: ${lead.opportunity.estimatedTicket}`;
               <span>Alta Prioridade LED</span>
             </span>
           )}
+
+          {lead.instagramIntelligence ? (
+            <button
+              type="button"
+              onClick={() => onOpenInstagramIntel && onOpenInstagramIntel(lead)}
+              className="px-2 py-0.5 rounded bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/40 text-[11px] font-semibold flex items-center gap-1 transition cursor-pointer"
+              title="Inteligência de Instagram e Geotags mapeada. Clique para abrir."
+            >
+              <Instagram className="w-3 h-3 text-pink-400" />
+              <span>Instagram Intel ({lead.instagramIntelligence.locationTags?.length || 0})</span>
+            </button>
+          ) : onOpenInstagramIntel ? (
+            <button
+              type="button"
+              onClick={() => onOpenInstagramIntel(lead)}
+              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-pink-300/80 border border-pink-500/20 text-[11px] font-medium flex items-center gap-1 transition cursor-pointer"
+              title="Mapear geotags e perfis de Instagram para este imóvel"
+            >
+              <Instagram className="w-3 h-3 text-pink-400" />
+              <span>Instagram Intel</span>
+            </button>
+          ) : null}
         </div>
 
         {/* Ficha de Fontes e Evidências Clicável (Expandable Box) */}
@@ -628,6 +655,28 @@ Ticket Estimado: ${lead.opportunity.estimatedTicket}`;
               </>
             )}
           </button>
+
+          {onOpenSocialIntel && (
+            <button
+              onClick={() => onOpenSocialIntel(lead)}
+              className="px-2 py-1 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 hover:from-indigo-500/30 hover:to-blue-500/30 text-indigo-300 text-xs rounded-lg border border-indigo-500/40 transition flex items-center gap-1 cursor-pointer"
+              title="Social Intelligence Multi-Provider (OSINT)"
+            >
+              <Globe2 className="w-3 h-3 text-indigo-400" />
+              <span className="hidden sm:inline">Social Intel</span>
+            </button>
+          )}
+
+          {onOpenInstagramIntel && (
+            <button
+              onClick={() => onOpenInstagramIntel(lead)}
+              className="px-2 py-1 bg-gradient-to-r from-pink-500/20 to-purple-500/20 hover:from-pink-500/30 hover:to-purple-500/30 text-pink-300 text-xs rounded-lg border border-pink-500/40 transition flex items-center gap-1 cursor-pointer"
+              title="Esteira Instagram Location Intelligence"
+            >
+              <Instagram className="w-3 h-3 text-pink-400" />
+              <span className="hidden sm:inline">Instagram</span>
+            </button>
+          )}
 
           <button
             onClick={() => onInvestigate(lead)}

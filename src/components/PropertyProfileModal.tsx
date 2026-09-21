@@ -39,7 +39,9 @@ import {
   Edit3,
   Save,
   Check,
-  Landmark
+  Landmark,
+  Bot,
+  Globe2
 } from 'lucide-react';
 
 interface PropertyProfileModalProps {
@@ -48,6 +50,9 @@ interface PropertyProfileModalProps {
   onClose: () => void;
   onNavigateToMap?: (lead: LeadTarget) => void;
   onUpdateLead?: (lead: LeadTarget) => void;
+  onConsultAi?: (lead: LeadTarget) => void;
+  onOpenInstagramIntel?: (lead: LeadTarget) => void;
+  onOpenSocialIntel?: (lead: LeadTarget) => void;
 }
 
 export const PropertyProfileModal: React.FC<PropertyProfileModalProps> = ({
@@ -55,7 +60,10 @@ export const PropertyProfileModal: React.FC<PropertyProfileModalProps> = ({
   isOpen,
   onClose,
   onNavigateToMap,
-  onUpdateLead
+  onUpdateLead,
+  onConsultAi,
+  onOpenInstagramIntel,
+  onOpenSocialIntel
 }) => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [isEditingCadastre, setIsEditingCadastre] = useState(false);
@@ -351,6 +359,43 @@ _Levantamento cadastral e técnico realizado via Lúmina Jurerê_`;
                 <Share2 className="w-4 h-4" />
                 <span>Enviar no WhatsApp</span>
               </button>
+              {onOpenSocialIntel && (
+                <button
+                  onClick={() => {
+                    onOpenSocialIntel(lead);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-indigo-500/20 via-blue-500/20 to-slate-800 hover:from-indigo-500/30 hover:to-blue-500/30 text-indigo-300 border border-indigo-500/40 text-xs font-bold rounded-lg transition cursor-pointer"
+                  title="Abrir esteira modular de Social Intelligence (OSINT)"
+                >
+                  <Globe2 className="w-4 h-4 text-indigo-400" />
+                  <span>Social Intel</span>
+                </button>
+              )}
+              {onOpenInstagramIntel && (
+                <button
+                  onClick={() => {
+                    onOpenInstagramIntel(lead);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-indigo-500/20 hover:from-pink-500/30 hover:to-indigo-500/30 text-pink-300 border border-pink-500/40 text-xs font-bold rounded-lg transition cursor-pointer"
+                  title="Abrir esteira de Inteligência de Localização e Instagram"
+                >
+                  <Instagram className="w-4 h-4 text-pink-400" />
+                  <span>Instagram Intel</span>
+                </button>
+              )}
+              {onConsultAi && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onConsultAi(lead);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold rounded-lg transition cursor-pointer"
+                  title="Consultar Assistente IA sobre este imóvel"
+                >
+                  <Bot className="w-4 h-4 text-amber-400" />
+                  <span>Consultar na IA</span>
+                </button>
+              )}
               {onNavigateToMap && lead.coordinates && (
                 <button
                   onClick={() => {
@@ -1022,6 +1067,193 @@ _Levantamento cadastral e técnico realizado via Lúmina Jurerê_`;
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Section 5: Inteligência de Localização & Instagram (OSINT Social) */}
+          <div className="pt-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Instagram className="w-5 h-5 text-pink-400" />
+                Inteligência de Localização & Instagram (OSINT Social)
+              </h3>
+              {onOpenInstagramIntel && (
+                <button
+                  onClick={() => onOpenInstagramIntel(lead)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-500/20 to-indigo-500/20 hover:from-pink-500/30 hover:to-indigo-500/30 text-pink-300 border border-pink-500/40 text-xs font-semibold transition cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                  <span>{lead.instagramIntelligence ? 'Ver Esteira Completa' : 'Executar Varredura'}</span>
+                </button>
+              )}
+            </div>
+
+            {lead.instagramIntelligence ? (
+              <div className="bg-gradient-to-br from-slate-900 via-indigo-950/20 to-slate-900 border border-pink-500/25 rounded-xl p-4.5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-500/20 text-pink-300 border border-pink-500/30 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-pink-400" />
+                      Social Intel Mapeado
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      Varredura realizada em {new Date(lead.instagramIntelligence.analyzedAt).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold text-indigo-300">
+                    {lead.instagramIntelligence.locationTags?.length || 0} Geotags • {lead.instagramIntelligence.publicPosts?.length || 0} Posts • {lead.instagramIntelligence.publicProfiles?.length || 0} Perfis
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-300 leading-relaxed bg-slate-850/70 p-3 rounded-lg border border-slate-800">
+                  {lead.instagramIntelligence.summary}
+                </p>
+
+                {/* Tags de Locais Identificados */}
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                    Geotags & Hotspots Correlacionados Próximos:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {lead.instagramIntelligence.locationTags?.map((loc) => (
+                      <span
+                        key={loc.id}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800/90 border border-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1"
+                      >
+                        <Compass className="w-3 h-3 text-pink-400" />
+                        {loc.name}
+                        {loc.distanceApproxMeters !== undefined && (
+                          <span className="text-[10px] text-slate-400">({loc.distanceApproxMeters}m)</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Estratégia Sugerida */}
+                {lead.instagramIntelligence.suggestedAction && (
+                  <div className="p-3 rounded-lg bg-indigo-950/30 border border-indigo-500/30 flex items-start gap-2.5 text-xs text-indigo-200">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-amber-300 block mb-0.5">Estratégia para Valorização em Locação:</span>
+                      {lead.instagramIntelligence.suggestedAction}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-slate-850/50 border border-dashed border-slate-700 rounded-xl p-5 text-center">
+                <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto mb-2">
+                  <Instagram className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-200">Nenhuma inteligência do Instagram coletada ainda</h4>
+                <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-3">
+                  Execute a esteira investigativa para mapear geotags de Jurerê, posts noturnos de arquitetura, perfis de arquitetos autores e corretores de luxo.
+                </p>
+                {onOpenInstagramIntel && (
+                  <button
+                    onClick={() => onOpenInstagramIntel(lead)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md transition cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Iniciar Esteira Instagram Location Intel</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Section 6: Social Intelligence Multi-Provider (OSINT) */}
+          <div className="pt-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Globe2 className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  Social Intelligence Multi-Provider
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800 font-mono">
+                    OSINT Modular
+                  </span>
+                </h3>
+              </div>
+              {onOpenSocialIntel && (
+                <button
+                  onClick={() => onOpenSocialIntel(lead)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500/20 to-blue-500/20 hover:from-indigo-500/30 hover:to-blue-500/30 text-indigo-300 border border-indigo-500/40 text-xs font-semibold transition cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>{lead.socialIntelligence ? 'Abrir Central de Evidências' : 'Executar Social Intel'}</span>
+                </button>
+              )}
+            </div>
+
+            {lead.socialIntelligence ? (
+              <div className="bg-slate-900 border border-indigo-500/30 rounded-xl p-4.5 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+                      Esteira Ativa: {lead.socialIntelligence.metadata?.provider || 'Multi-Provider'}
+                    </span>
+                    {lead.socialIntelligence.metadata?.mock && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        DADOS DE DEMONSTRAÇÃO
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs font-mono text-slate-400">
+                    {lead.socialIntelligence.locations?.length || 0} Locais • {lead.socialIntelligence.posts?.length || 0} Posts • {lead.socialIntelligence.evidence?.length || 0} Evidências • {lead.socialIntelligence.relationshipHypotheses?.length || 0} Hipóteses
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                    <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
+                      Fatos Observados ({lead.socialIntelligence.evidence?.length || 0})
+                    </span>
+                    <p className="text-slate-300 text-[11px]">
+                      {lead.socialIntelligence.evidence?.[0]?.description || 'Evidências públicas documentadas com links de origem.'}
+                    </p>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+                    <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+                      Hipóteses Relacionais ({lead.socialIntelligence.relationshipHypotheses?.length || 0})
+                    </span>
+                    <p className="text-slate-300 text-[11px]">
+                      {lead.socialIntelligence.relationshipHypotheses?.[0]?.notes || 'Hipóteses separadas epistemologicamente de fatos confirmados.'}
+                    </p>
+                  </div>
+                </div>
+
+                {onOpenSocialIntel && (
+                  <button
+                    onClick={() => onOpenSocialIntel(lead)}
+                    className="w-full py-2 bg-slate-800 hover:bg-slate-750 text-indigo-300 text-xs font-semibold rounded-lg border border-slate-700 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Ver Dossiê Completo de Fontes Abertas</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="bg-slate-850/50 border border-dashed border-slate-700 rounded-xl p-5 text-center">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-2">
+                  <Globe2 className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-200">Social Intelligence Multi-Provider Não Executado</h4>
+                <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-3">
+                  Integração modular com Instaloader (Open Source), fontes públicas e índices de geolocalização com estrita distinção entre evidência e hipótese.
+                </p>
+                {onOpenSocialIntel && (
+                  <button
+                    onClick={() => onOpenSocialIntel(lead)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs font-bold shadow-md transition cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Iniciar Social Intelligence (OSINT)</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

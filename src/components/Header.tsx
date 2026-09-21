@@ -10,14 +10,15 @@ import {
   BookOpen, 
   Layers,
   Map as MapIcon,
-  Database
+  Database,
+  Bot
 } from 'lucide-react';
 
 interface HeaderProps {
   currentCity: string;
   onCityChange: (city: string) => void;
-  activeTab: 'radar' | 'map' | 'pipeline' | 'investigator' | 'public_db' | 'osint';
-  onTabChange: (tab: 'radar' | 'map' | 'pipeline' | 'investigator' | 'public_db' | 'osint') => void;
+  activeTab: 'radar' | 'map' | 'pipeline' | 'investigator' | 'public_db' | 'osint' | 'ai_chat';
+  onTabChange: (tab: 'radar' | 'map' | 'pipeline' | 'investigator' | 'public_db' | 'osint' | 'ai_chat') => void;
   totalLeads: number;
   contactedCount: number;
   scheduledVisits: number;
@@ -192,6 +193,21 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Métodos Gratuitos OSINT</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('ai_chat')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                activeTab === 'ai_chat'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5 text-amber-400" />
+              <span>Auxílio IA</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                Chatbot
+              </span>
             </button>
           </nav>
 
